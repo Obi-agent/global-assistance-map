@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Assistance Partners Network</title>
+  <meta name="description" content="Interactive map of our global network of medical and travel assistance service providers." />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- ── Sidebar ────────────────────────────────────────────────────── -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <p class="eyebrow">Global Assistance Partners</p>
+        <h1>Service Provider Network</h1>
+        <p>Interactive map of our worldwide network. Green markers indicate a fully signed agreement; orange markers indicate a pending agreement.</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value signed" id="countSigned">—</div>
+          <div class="stat-label">Agreements signed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value pending" id="countTotal">—</div>
+          <div class="stat-label">Pending signature</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="filter-buttons">
+          <button class="btn-filter active" id="filterAll" data-filter="all">All providers</button>
+          <button class="btn-filter signed-filter" id="filterSigned" data-filter="signed">Signed</button>
+          <button class="btn-filter pending-filter" id="filterPending" data-filter="pending">Pending</button>
+        </div>
+        <div class="search-box">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="search" id="searchInput" placeholder="Search provider, country or city…"
+                 aria-label="Search providers" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="provider-list-wrap">
+        <ul id="providerList" class="provider-list" role="list"></ul>
+      </div>
+    </aside>
+
+    <!-- ── Map ────────────────────────────────────────────────────────── -->
+    <main class="map-stage">
+      <div class="map-topbar">
+        <div>
+          <strong id="mapStatus">Showing all providers</strong>
+          <div class="subtle" id="mapSubtext"></div>
+        </div>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-dot signed"></span>
+            <span>Agreement signed</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot pending"></span>
+            <span>Agreement pending</span>
+          </div>
+        </div>
+      </div>
+      <div id="map"></div>
+    </main>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <!-- Provider data & app logic -->
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
