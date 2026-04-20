@@ -79,23 +79,45 @@ PROVIDERS.forEach((p, i) => {
 
   const marker = L.marker([p.lat, p.lon], { icon: makeIcon(p.signed) });
 
-  const homepageHtml = p.homepage
-    ? `<a href="${p.homepage.startsWith('http') ? p.homepage : 'https://' + p.homepage}" target="_blank" rel="noopener" class="popup-link">Visit website</a>`
-    : '';
-
   const statusLabel = p.signed
     ? `<span class="popup-badge signed">Agreement signed</span>`
     : `<span class="popup-badge pending">Agreement pending</span>`;
 
+  const emailHtml = p.email
+    ? `<div class="popup-contact-row">
+         <span class="popup-contact-icon">✉</span>
+         <a href="mailto:${p.email}" class="popup-contact-link">${p.email}</a>
+       </div>`
+    : '';
+
+  const phoneHtml = p.phone
+    ? `<div class="popup-contact-row">
+         <span class="popup-contact-icon">✆</span>
+         <a href="tel:${p.phone.replace(/\s/g, '')}" class="popup-contact-link">${p.phone}</a>
+       </div>`
+    : '';
+
+  const homepageHtml = p.homepage
+    ? `<div class="popup-contact-row">
+         <span class="popup-contact-icon">⊕</span>
+         <a href="${p.homepage}" target="_blank" rel="noopener" class="popup-contact-link">${p.homepage.replace(/^https?:\/\//, '')}</a>
+       </div>`
+    : '';
+
+  const contactHtml = (emailHtml || phoneHtml || homepageHtml)
+    ? `<div class="popup-divider"></div><div class="popup-contacts">${emailHtml}${phoneHtml}${homepageHtml}</div>`
+    : '';
+
   marker.bindPopup(`
     <div class="popup-card">
+      <div class="popup-category">TPA — Travel &amp; Medical Assistance</div>
       <div class="popup-name">${p.name}</div>
-      <div class="popup-meta">${p.hqCity ? p.hqCity + ', ' : ''}${p.hqCountry}</div>
-      <div class="popup-meta dim">${p.continent}</div>
+      <div class="popup-location">${p.hqCity ? p.hqCity + ', ' : ''}${p.hqCountry}</div>
+      <div class="popup-continent">${p.continent}</div>
       ${statusLabel}
-      ${homepageHtml}
+      ${contactHtml}
     </div>
-  `, { maxWidth: 280, className: 'custom-popup' });
+  `, { maxWidth: 310, className: 'custom-popup' });
 
   marker.on('click', () => {
     highlightListItem(i);
