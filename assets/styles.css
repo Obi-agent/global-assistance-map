@@ -70,6 +70,51 @@ html, body {
   line-height: 1.5;
 }
 
+/* ─── Category tabs ──────────────────────────────────────────────────── */
+.category-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(0,0,0,0.15);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.category-tabs::-webkit-scrollbar { display: none; }
+
+.btn-cat {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+.btn-cat:hover { color: var(--color-text); background: rgba(255,255,255,0.04); }
+.btn-cat.active {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+  background: rgba(59,130,246,0.08);
+}
+
+/* ─── Category label row ──────────────────────────────────────────────── */
+.cat-label-row {
+  padding: 8px 20px 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-muted);
+  min-height: 24px;
+}
+
 /* ─── Stats row ───────────────────────────────────────────────────────── */
 .stats-row {
   display: flex;

@@ -1,4 +1,8 @@
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Global Assistance Partners Network — Interactive Map
+   ═══════════════════════════════════════════════════════════════════════ */
+
 /* ─── Map initialisation ─────────────────────────────────────────────── */
 
 const map = L.map('map', {
@@ -7,50 +11,41 @@ const map = L.map('map', {
   maxZoom: 18
 }).setView([20, 10], 2);
 
-// ESRI World Imagery (satellite) as base layer
-const satellite = L.tileLayer(
+// ESRI World Imagery (satellite)
+L.tileLayer(
   'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  {
-    maxZoom: 19,
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA'
-  }
+  { maxZoom: 19, attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA' }
 ).addTo(map);
 
-// ESRI World Boundaries and Places overlay — English labels on top of satellite
-const labels = L.tileLayer(
+// ESRI English labels overlay
+L.tileLayer(
   'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-  {
-    maxZoom: 19,
-    attribution: 'Labels &copy; Esri',
-    pane: 'overlayPane'
-  }
+  { maxZoom: 19, attribution: 'Labels &copy; Esri', pane: 'overlayPane' }
 ).addTo(map);
 
 /* ─── State ──────────────────────────────────────────────────────────── */
 
-let activeFilter = 'all'; // 'all' | 'signed' | 'pending'
-let searchQuery  = '';
-let activeMarker = null;
+let activeCategoryId = 'tpa';   // currently shown category
+let activeFilter     = 'all';   // 'all' | 'signed' | 'pending'
+let searchQuery      = '';
+let activeMarker     = null;
+let markersByIndex   = [];
+const markerGroup    = L.layerGroup().addTo(map);
 
-/* ─── Marker helpers ─────────────────────────────────────────────────── */
+/* ─── Marker icons ───────────────────────────────────────────────────── */
 
-const COLOR_SIGNED  = '#2ecc71'; // green
-const COLOR_PENDING = '#f39c12'; // orange
+const COLOR_SIGNED  = '#2ecc71';
+const COLOR_PENDING = '#f39c12';
 
-function makeIcon(signed) {
+function makeIcon(signed, small = false) {
   const color = signed ? COLOR_SIGNED : COLOR_PENDING;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="34" viewBox="0 0 26 34">
+  const w = small ? 22 : 26, h = small ? 29 : 34;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 26 34">
     <path d="M13 0C5.82 0 0 5.82 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.82 20.18 0 13 0z"
           fill="${color}" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
     <circle cx="13" cy="13" r="5" fill="white" opacity="0.9"/>
   </svg>`;
-  return L.divIcon({
-    html: svg,
-    className: '',
-    iconSize:   [26, 34],
-    iconAnchor: [13, 34],
-    popupAnchor:[0, -36]
-  });
+  return L.divIcon({ html: svg, className: '', iconSize: [w, h], iconAnchor: [w/2, h], popupAnchor: [0, -(h+2)] });
 }
 
 function makeIconHighlighted(signed) {
@@ -60,104 +55,140 @@ function makeIconHighlighted(signed) {
           fill="${color}" stroke="white" stroke-width="2.5"/>
     <circle cx="17" cy="17" r="7" fill="white" opacity="0.95"/>
   </svg>`;
-  return L.divIcon({
-    html: svg,
-    className: '',
-    iconSize:   [34, 44],
-    iconAnchor: [17, 44],
-    popupAnchor:[0, -46]
-  });
+  return L.divIcon({ html: svg, className: '', iconSize: [34, 44], iconAnchor: [17, 44], popupAnchor: [0, -46] });
 }
 
-/* ─── Build markers ──────────────────────────────────────────────────── */
+/* ─── Popup builder ──────────────────────────────────────────────────── */
 
-const markerGroup = L.layerGroup().addTo(map);
-const markersByIndex = [];
-
-PROVIDERS.forEach((p, i) => {
-  if (p.lat === 0 && p.lon === 0) return;
-
-  const marker = L.marker([p.lat, p.lon], { icon: makeIcon(p.signed) });
-
+function buildPopup(p, catFullLabel) {
   const statusLabel = p.signed
     ? `<span class="popup-badge signed">Agreement signed</span>`
     : `<span class="popup-badge pending">Agreement pending</span>`;
+
+  const locationParts = [p.hqCity, p.hqCountry || p.country].filter(Boolean);
+  const locationLine  = locationParts.join(', ');
 
   const emailHtml = p.email
     ? `<div class="popup-contact-row">
          <span class="popup-contact-icon">✉</span>
          <a href="mailto:${p.email}" class="popup-contact-link">${p.email}</a>
-       </div>`
-    : '';
+       </div>` : '';
 
   const phoneHtml = p.phone
     ? `<div class="popup-contact-row">
          <span class="popup-contact-icon">✆</span>
-         <a href="tel:${p.phone.replace(/\s/g, '')}" class="popup-contact-link">${p.phone}</a>
-       </div>`
-    : '';
+         <a href="tel:${p.phone.replace(/\s/g,'')}" class="popup-contact-link">${p.phone}</a>
+       </div>` : '';
 
-  const homepageHtml = p.homepage
+  const webHtml = p.homepage
     ? `<div class="popup-contact-row">
          <span class="popup-contact-icon">⊕</span>
-         <a href="${p.homepage}" target="_blank" rel="noopener" class="popup-contact-link">${p.homepage.replace(/^https?:\/\//, '')}</a>
-       </div>`
-    : '';
+         <a href="${p.homepage}" target="_blank" rel="noopener" class="popup-contact-link">${p.homepage.replace(/^https?:\/\//,'')}</a>
+       </div>` : '';
 
-  const contactHtml = (emailHtml || phoneHtml || homepageHtml)
-    ? `<div class="popup-divider"></div><div class="popup-contacts">${emailHtml}${phoneHtml}${homepageHtml}</div>`
-    : '';
+  const contactBlock = (emailHtml || phoneHtml || webHtml)
+    ? `<div class="popup-divider"></div><div class="popup-contacts">${emailHtml}${phoneHtml}${webHtml}</div>` : '';
 
-  marker.bindPopup(`
+  return `
     <div class="popup-card">
-      <div class="popup-category">TPA — Travel &amp; Medical Assistance</div>
+      <div class="popup-category">${catFullLabel}</div>
       <div class="popup-name">${p.name}</div>
-      <div class="popup-location">${p.hqCity ? p.hqCity + ', ' : ''}${p.hqCountry}</div>
-      <div class="popup-continent">${p.continent}</div>
+      ${locationLine ? `<div class="popup-location">${locationLine}</div>` : ''}
+      ${p.country && p.country !== locationLine ? `<div class="popup-continent">${p.country}</div>` : ''}
       ${statusLabel}
-      ${contactHtml}
-    </div>
-  `, { maxWidth: 310, className: 'custom-popup' });
+      ${contactBlock}
+    </div>`;
+}
 
-  marker.on('click', () => {
-    highlightListItem(i);
-    setActiveMarker(marker, p.signed, i);
+/* ─── Build all markers (once per category load) ─────────────────────── */
+
+function buildMarkers(providers, catFullLabel) {
+  markerGroup.clearLayers();
+  markersByIndex = [];
+  if (activeMarker) { activeMarker = null; }
+
+  providers.forEach((p, i) => {
+    if (!p.lat && !p.lon) return;
+    const isSmall = providers.length > 150; // use smaller icons for dense datasets
+    const marker = L.marker([p.lat, p.lon], { icon: makeIcon(p.signed, isSmall) });
+    marker.bindPopup(buildPopup(p, catFullLabel), { maxWidth: 310, className: 'custom-popup' });
+    marker.on('click', () => {
+      highlightListItem(i);
+      setActiveMarker(marker, p.signed, i);
+    });
+    marker._providerIndex = i;
+    markersByIndex[i] = marker;
   });
-
-  marker.providerIndex = i;
-  markerGroup.addLayer(marker);
-  markersByIndex[i] = marker;
-});
+}
 
 function setActiveMarker(marker, signed, index) {
-  // Reset previous
   if (activeMarker && activeMarker._providerIndex !== undefined) {
-    const prevP = PROVIDERS[activeMarker._providerIndex];
-    if (prevP) markersByIndex[activeMarker._providerIndex]?.setIcon(makeIcon(prevP.signed));
+    const prev = currentProviders()[activeMarker._providerIndex];
+    if (prev && markersByIndex[activeMarker._providerIndex]) {
+      markersByIndex[activeMarker._providerIndex].setIcon(makeIcon(prev.signed, currentProviders().length > 150));
+    }
   }
   marker.setIcon(makeIconHighlighted(signed));
   marker._providerIndex = index;
   activeMarker = marker;
 }
 
-/* ─── Sidebar elements ───────────────────────────────────────────────── */
+/* ─── Category helpers ───────────────────────────────────────────────── */
 
-const searchInputEl   = document.getElementById('searchInput');
-const providerListEl  = document.getElementById('providerList');
-const filterAllBtn    = document.getElementById('filterAll');
-const filterSignedBtn = document.getElementById('filterSigned');
-const filterPendingBtn= document.getElementById('filterPending');
-const countSignedEl   = document.getElementById('countSigned');
-const countPendingEl  = document.getElementById('countTotal');
-const mapStatusEl     = document.getElementById('mapStatus');
-const mapSubtextEl    = document.getElementById('mapSubtext');
+function currentCategory() { return CATEGORIES[activeCategoryId]; }
+function currentProviders() { return currentCategory().providers; }
 
-/* ─── Summary counts ─────────────────────────────────────────────────── */
+/* ─── Sidebar DOM refs ───────────────────────────────────────────────── */
 
-const totalSigned  = PROVIDERS.filter(p => p.signed).length;
-const totalPending = PROVIDERS.filter(p => !p.signed).length;
-countSignedEl.textContent  = totalSigned;
-countPendingEl.textContent = totalPending;
+const categoryTabsEl   = document.getElementById('categoryTabs');
+const searchInputEl    = document.getElementById('searchInput');
+const providerListEl   = document.getElementById('providerList');
+const filterAllBtn     = document.getElementById('filterAll');
+const filterSignedBtn  = document.getElementById('filterSigned');
+const filterPendingBtn = document.getElementById('filterPending');
+const countSignedEl    = document.getElementById('countSigned');
+const countPendingEl   = document.getElementById('countPending');
+const mapStatusEl      = document.getElementById('mapStatus');
+const mapSubtextEl     = document.getElementById('mapSubtext');
+const catLabelEl       = document.getElementById('catFullLabel');
+
+/* ─── Category tabs (dynamic) ────────────────────────────────────────── */
+
+Object.values(CATEGORIES).forEach(cat => {
+  const btn = document.createElement('button');
+  btn.className = 'btn-cat' + (cat.id === activeCategoryId ? ' active' : '');
+  btn.dataset.cat = cat.id;
+  btn.textContent = cat.label;
+  btn.addEventListener('click', () => switchCategory(cat.id));
+  categoryTabsEl.appendChild(btn);
+});
+
+function switchCategory(id) {
+  activeCategoryId = id;
+  activeFilter = 'all';
+  searchQuery  = '';
+  searchInputEl.value = '';
+  activeMarker = null;
+
+  // Update tab buttons
+  document.querySelectorAll('.btn-cat').forEach(b => b.classList.toggle('active', b.dataset.cat === id));
+  // Reset filter buttons
+  [filterAllBtn, filterSignedBtn, filterPendingBtn].forEach(b => b.classList.remove('active'));
+  filterAllBtn.classList.add('active');
+
+  const cat = CATEGORIES[id];
+  catLabelEl.textContent = cat.fullLabel;
+
+  // Update stats
+  const signed  = cat.providers.filter(p => p.signed).length;
+  const pending  = cat.providers.filter(p => !p.signed).length;
+  countSignedEl.textContent  = signed;
+  countPendingEl.textContent = pending;
+
+  // Rebuild markers
+  buildMarkers(cat.providers, cat.fullLabel);
+  renderList();
+}
 
 /* ─── Filtering & rendering ──────────────────────────────────────────── */
 
@@ -172,10 +203,9 @@ function matchesSearch(p) {
   const q = searchQuery.toLowerCase();
   return (
     p.name.toLowerCase().includes(q) ||
-    p.country.toLowerCase().includes(q) ||
-    p.hqCity.toLowerCase().includes(q) ||
-    p.hqCountry.toLowerCase().includes(q) ||
-    p.continent.toLowerCase().includes(q)
+    (p.country  || '').toLowerCase().includes(q) ||
+    (p.hqCity   || '').toLowerCase().includes(q) ||
+    (p.hqCountry|| '').toLowerCase().includes(q)
   );
 }
 
@@ -183,24 +213,23 @@ function renderList() {
   providerListEl.innerHTML = '';
   markerGroup.clearLayers();
 
-  const visible = PROVIDERS.filter((p, i) => {
+  const providers = currentProviders();
+  const cat = currentCategory();
+
+  const visible = providers.filter((p, i) => {
     const show = matchesFilter(p) && matchesSearch(p);
-    if (show && p.lat !== 0) {
-      const m = markersByIndex[i];
-      if (m) markerGroup.addLayer(m);
-    }
+    if (show && markersByIndex[i]) markerGroup.addLayer(markersByIndex[i]);
     return show;
   });
 
-  // Update map status bar
-  const label = activeFilter === 'all'     ? 'Showing all providers'
-               : activeFilter === 'signed' ? 'Showing signed partners'
-               :                             'Showing pending partners';
+  const label = activeFilter === 'all'     ? `Showing all ${cat.label} providers`
+               : activeFilter === 'signed' ? `Showing signed ${cat.label} partners`
+               :                             `Showing pending ${cat.label} partners`;
   mapStatusEl.textContent  = label;
   mapSubtextEl.textContent = `${visible.length} provider${visible.length !== 1 ? 's' : ''} shown`;
 
-  visible.forEach((p, idx) => {
-    const origIndex = PROVIDERS.indexOf(p);
+  visible.forEach(p => {
+    const origIndex = providers.indexOf(p);
     const li = document.createElement('li');
     li.className = 'provider-item';
     li.dataset.index = origIndex;
@@ -208,10 +237,12 @@ function renderList() {
     const dot = document.createElement('span');
     dot.className = `status-dot ${p.signed ? 'signed' : 'pending'}`;
 
+    const locParts = [p.hqCity, p.hqCountry || p.country].filter(Boolean);
+
     const info = document.createElement('div');
     info.className = 'provider-info';
     info.innerHTML = `<span class="provider-name">${p.name}</span>
-                      <span class="provider-loc">${p.hqCity ? p.hqCity + ', ' : ''}${p.hqCountry || p.country}</span>`;
+                      <span class="provider-loc">${locParts.join(', ')}</span>`;
 
     li.appendChild(dot);
     li.appendChild(info);
@@ -223,7 +254,6 @@ function renderList() {
         marker.openPopup();
         setActiveMarker(marker, p.signed, origIndex);
       }
-      // Highlight in list
       document.querySelectorAll('.provider-item').forEach(el => el.classList.remove('active'));
       li.classList.add('active');
     });
@@ -258,6 +288,6 @@ searchInputEl.addEventListener('input', e => {
   renderList();
 });
 
-/* ─── Initial render ─────────────────────────────────────────────────── */
+/* ─── Boot ───────────────────────────────────────────────────────────── */
 
-renderList();
+switchCategory(activeCategoryId);

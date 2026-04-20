@@ -6,14 +6,10 @@
   <title>Global Assistance Partners Network</title>
   <meta name="description" content="Interactive map of our global network of medical and travel assistance service providers." />
 
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-
-  <!-- Google Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
   <link rel="stylesheet" href="assets/styles.css" />
 </head>
 <body>
@@ -27,21 +23,31 @@
         <p>Interactive map of our worldwide network. Green markers indicate a fully signed agreement; orange markers indicate a pending agreement.</p>
       </div>
 
+      <!-- Category tabs (populated by JS) -->
+      <div class="category-tabs" id="categoryTabs"></div>
+
+      <!-- Current category label -->
+      <div class="cat-label-row">
+        <span id="catFullLabel"></span>
+      </div>
+
+      <!-- Stats -->
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-value signed" id="countSigned">—</div>
           <div class="stat-label">Agreements signed</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value pending" id="countTotal">—</div>
+          <div class="stat-value pending" id="countPending">—</div>
           <div class="stat-label">Pending signature</div>
         </div>
       </div>
 
+      <!-- Filters + search -->
       <div class="controls">
         <div class="filter-buttons">
-          <button class="btn-filter active" id="filterAll" data-filter="all">All providers</button>
-          <button class="btn-filter signed-filter" id="filterSigned" data-filter="signed">Signed</button>
+          <button class="btn-filter active" id="filterAll"     data-filter="all">All</button>
+          <button class="btn-filter signed-filter"  id="filterSigned"  data-filter="signed">Signed</button>
           <button class="btn-filter pending-filter" id="filterPending" data-filter="pending">Pending</button>
         </div>
         <div class="search-box">
@@ -54,6 +60,7 @@
         </div>
       </div>
 
+      <!-- Provider list -->
       <div class="provider-list-wrap">
         <ul id="providerList" class="provider-list" role="list"></ul>
       </div>
@@ -63,18 +70,12 @@
     <main class="map-stage">
       <div class="map-topbar">
         <div>
-          <strong id="mapStatus">Showing all providers</strong>
+          <strong id="mapStatus">Loading…</strong>
           <div class="subtle" id="mapSubtext"></div>
         </div>
         <div class="legend">
-          <div class="legend-item">
-            <span class="legend-dot signed"></span>
-            <span>Agreement signed</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot pending"></span>
-            <span>Agreement pending</span>
-          </div>
+          <div class="legend-item"><span class="legend-dot signed"></span><span>Agreement signed</span></div>
+          <div class="legend-item"><span class="legend-dot pending"></span><span>Agreement pending</span></div>
         </div>
       </div>
       <div id="map"></div>
@@ -82,10 +83,7 @@
 
   </div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-
-  <!-- Provider data & app logic -->
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>
 </body>
