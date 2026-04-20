@@ -538,6 +538,18 @@ const AA_PROVIDERS = [
   { name: "WORLD WIDE ASSIST", country: "INDIA", hqCity: "Gurgaon, Haryana", hqCountry: "", lat: 28.4595, lon: 77.0266, signed: false, email: "ops@worldwideassist.org", phone: "+91-9643511937", homepage: "http://www.worldwideassist.org/contact-us.html" }
 ];
 
+
+const ME_PROVIDERS = [
+  { name: "AMTRAS AEROMED", country: "GERMANY", hqCity: "Eschborn", hqCountry: "", lat: 50.1438, lon: 8.567, signed: true, email: "operations@amtras.de", phone: "+1 279 204 4907", homepage: "http://amtras.de" },
+  { name: "REPATRIA MEDICA", country: "SPAIN", hqCity: "Barcelona", hqCountry: "", lat: 41.3851, lon: 2.1734, signed: true, email: "info@repatriamedica.com", phone: "+34 93 527 62 80", homepage: "https://www.repatriamedica.com/" },
+  { name: "REPATRIATION MEDICAL SERVICES LTD", country: "UK", hqCity: "", hqCountry: "", lat: 51.5074, lon: -0.1278, signed: true, email: "adam@rms.uk", phone: "+44 330 8189715", homepage: "https://www.repatriationmedicalservices.com/" },
+  { name: "SKYCARE", country: "USA", hqCity: "Florida", hqCountry: "", lat: 27.9944, lon: -81.7603, signed: true, email: "quote@skycareglobal.com", phone: "+1 727 230 2263", homepage: "http://www.skycareglobal.com" },
+  { name: "SKY NURSES", country: "USA", hqCity: "", hqCountry: "", lat: 37.0902, lon: -95.7129, signed: false, email: "m.rivera@skynurses.com", phone: "+1 561 666 6412", homepage: "http://www.SkyNurses.com" },
+  { name: "AD MEDICAL AIR ASSIST", country: "UK", hqCity: "", hqCountry: "", lat: 51.5074, lon: -0.1278, signed: false, email: "enquiries@admedicalairassist.co.uk", phone: "+44 7368 163991", homepage: "http://www.admedicalairassist.co.uk" },
+  { name: "MEDICIS", country: "IVORY COAST", hqCity: "Abidjan", hqCountry: "", lat: 5.36, lon: -4.0083, signed: false, email: "lamadieu@medicis-ci.com", phone: "+33 6 23 38 09 11", homepage: "" },
+  { name: "247 AVIATION LIMITED", country: "IRELAND", hqCity: "Crumlin", hqCountry: "", lat: 54.581, lon: -6.1028, signed: true, email: "operations@247aviation.co.uk", phone: "+44 28 9442 2646", homepage: "https://www.247aviation.co.uk" },
+  { name: "247 AVIATION LTD", country: "IRELAND", hqCity: "Belfast", hqCountry: "", lat: 54.5973, lon: -5.9301, signed: true, email: "Fiona.Mulligan@247Aviation.co.uk", phone: "+44 (0)2894 571811", homepage: "https://www.247aviation.co.uk" }
+];
 // Registry — add future categories here
 const CATEGORIES = {
   tpa: {
@@ -557,5 +569,11 @@ const CATEGORIES = {
     label: "Air Ambulance",
     fullLabel: "Air Ambulance",
     providers: AA_PROVIDERS,
+  },
+  me: {
+    id: "me",
+    label: "Medical Escort",
+    fullLabel: "Medical Escort",
+    providers: ME_PROVIDERS,
   },
 };
